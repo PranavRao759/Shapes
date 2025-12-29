@@ -50,8 +50,7 @@ canvas {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-
-<script>
+<script><script>
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f172a);
 
@@ -85,9 +84,10 @@ function clearShape(){
 let material = new THREE.MeshStandardMaterial({
   color:0x38bdf8,
   metalness:0.4,
-  roughness:0.2
+  roughness:0.25
 });
 
+// Shapes
 function cube(){
   clearShape();
   mesh = new THREE.Mesh(
@@ -136,12 +136,16 @@ function frustum(){
 // Default shape
 cube();
 
+// 🔥 SCROLL ROTATION
+window.addEventListener("wheel", (e)=>{
+  if(!mesh) return;
+  mesh.rotation.y += e.deltaY * 0.002;
+  mesh.rotation.x += e.deltaX * 0.002;
+});
+
+// Render loop (NO AUTO ROTATION)
 function animate(){
   requestAnimationFrame(animate);
-  if(mesh){
-    mesh.rotation.y += 0.01;
-    mesh.rotation.x += 0.005;
-  }
   renderer.render(scene, camera);
 }
 animate();
@@ -152,6 +156,6 @@ window.addEventListener('resize', ()=>{
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
+</script>
 </body>
 </html>
-
