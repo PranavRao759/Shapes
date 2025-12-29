@@ -1,181 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>3D Shape Explorer Pro</title>
-
+<title>3D Shapes</title>
 <style>
-body{
-    margin:0;
-    font-family:Segoe UI,sans-serif;
-    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-    color:white;
-    display:flex;
-    height:100vh;
+body { margin:0; background:#0f172a; color:white; font-family:Arial }
+h1 { text-align:center; margin:10px }
+#menu {
+  position:fixed; left:10px; top:70px;
+  background:#111827; padding:10px;
+  border-radius:10px;
 }
-
-/* Sidebar */
-.sidebar{
-    width:300px;
-    background:rgba(0,0,0,0.5);
-    padding:15px;
-    overflow-y:auto;
+button {
+  width:130px; margin:5px 0;
+  padding:8px; border:none;
+  background:#22c55e; color:black;
+  border-radius:6px; cursor:pointer;
 }
-.sidebar h2{
-    text-align:center;
-    margin:10px 0;
-}
-button{
-    width:100%;
-    padding:10px;
-    margin:4px 0;
-    background:#1abc9c;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:14px;
-}
-button:hover{background:#16a085}
-
-/* Main display */
-.main{
-    flex:1;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    perspective:1200px;
-}
-.shape{
-    width:300px;
-    height:300px;
-    position:relative;
-    transform-style:preserve-3d;
-}
-
-/* BASIC CURVED SHAPES */
-.sphere{
-    width:200px;height:200px;
-    border-radius:50%;
-    background:radial-gradient(circle at 30% 30%,#fff,#3498db);
-}
-.hemisphere{
-    width:200px;height:100px;
-    border-radius:200px 200px 0 0;
-    background:radial-gradient(circle,#fff,#9b59b6);
-}
-.cylinder{
-    width:150px;height:220px;
-    border-radius:75px;
-    background:linear-gradient(to right,#2980b9,#6dd5fa,#2980b9);
-}
-.cone{
-    width:0;height:0;
-    border-left:100px solid transparent;
-    border-right:100px solid transparent;
-    border-bottom:200px solid #e67e22;
-}
-.frustum{
-    width:0;height:0;
-    border-left:120px solid transparent;
-    border-right:120px solid transparent;
-    border-bottom:200px solid #d35400;
-    transform:scaleY(0.6);
-}
-.torus{
-    width:200px;height:200px;
-    border-radius:50%;
-    box-shadow:0 0 0 40px #f1c40f inset;
-}
-.ellipsoid{
-    width:220px;height:160px;
-    border-radius:50%;
-    background:radial-gradient(circle,#fff,#1abc9c);
-}
-.capsule{
-    width:120px;height:240px;
-    border-radius:60px;
-    background:linear-gradient(#ecf0f1,#3498db);
-}
-
-/* POLYHEDRA */
-.cube,.cuboid,.tetra,.pyramid,.prism{
-    position:relative;
-    transform-style:preserve-3d;
-}
-.face{
-    position:absolute;
-    background:rgba(52,152,219,0.85);
-    border:1px solid #fff;
-}
-
-/* Cube */
-.cube .face{width:150px;height:150px;}
-.cube .f1{transform:translateZ(75px)}
-.cube .f2{transform:rotateY(180deg) translateZ(75px)}
-.cube .f3{transform:rotateY(90deg) translateZ(75px)}
-.cube .f4{transform:rotateY(-90deg) translateZ(75px)}
-.cube .f5{transform:rotateX(90deg) translateZ(75px)}
-.cube .f6{transform:rotateX(-90deg) translateZ(75px)}
-
-/* Cuboid */
-.cuboid .face{width:180px;height:120px;}
-.cuboid .f1{transform:translateZ(60px)}
-.cuboid .f2{transform:rotateY(180deg) translateZ(60px)}
-.cuboid .f3{transform:rotateY(90deg) translateZ(90px)}
-.cuboid .f4{transform:rotateY(-90deg) translateZ(90px)}
-.cuboid .f5{transform:rotateX(90deg) translateZ(60px)}
-.cuboid .f6{transform:rotateX(-90deg) translateZ(60px)}
-
+canvas { display:block }
 </style>
 </head>
 
 <body>
+<h1>Real 3D Shapes</h1>
 
-<div class="sidebar">
-<h2>3D Shapes</h2>
-<button onclick="show('sphere')">Sphere</button>
-<button onclick="show('hemisphere')">Hemisphere</button>
-<button onclick="show('cylinder')">Cylinder</button>
-<button onclick="show('cone')">Cone</button>
-<button onclick="show('frustum')">Frustum of Cone</button>
-<button onclick="show('cube')">Cube</button>
-<button onclick="show('cuboid')">Cuboid</button>
-<button onclick="show('torus')">Torus</button>
-<button onclick="show('ellipsoid')">Ellipsoid</button>
-<button onclick="show('capsule')">Capsule</button>
+<div id="menu">
+<button onclick="cube()">Cube</button>
+<button onclick="sphere()">Sphere</button>
+<button onclick="cylinder()">Cylinder</button>
+<button onclick="cone()">Cone</button>
+<button onclick="frustum()">Frustum</button>
 </div>
 
-<div class="main">
-<div id="shape" class="shape"></div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-let ax=0, ay=0;
-const s=document.getElementById("shape");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0f172a);
 
-function show(type){
-    s.innerHTML="";
-    s.className="shape "+type;
-    ax=ay=0;
-    s.style.transform="rotateX(0deg) rotateY(0deg)";
-    if(type==="cube"||type==="cuboid"){
-        for(let i=1;i<=6;i++){
-            let d=document.createElement("div");
-            d.className="face f"+i;
-            s.appendChild(d);
-        }
-    }
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(4,4,6);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// LIGHTS
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5,10,7);
+scene.add(light);
+
+let mesh;
+
+function clearShape(){
+  if(mesh) scene.remove(mesh);
 }
 
-window.addEventListener("wheel",e=>{
-    ax+=e.deltaY*0.1;
-    s.style.transform=`rotateX(${ax}deg) rotateY(${ay}deg)`;
+const material = new THREE.MeshStandardMaterial({
+  color:0x38bdf8,
+  metalness:0.4,
+  roughness:0.2
 });
-window.addEventListener("mousemove",e=>{
-    ay=(e.clientX/window.innerWidth-0.5)*360;
-    s.style.transform=`rotateX(${ax}deg) rotateY(${ay}deg)`;
+
+function cube(){
+  clearShape();
+  mesh = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), material);
+  scene.add(mesh);
+}
+
+function sphere(){
+  clearShape();
+  mesh = new THREE.Mesh(new THREE.SphereGeometry(1.5, 64, 64), material);
+  scene.add(mesh);
+}
+
+function cylinder(){
+  clearShape();
+  mesh = new THREE.Mesh(new THREE.CylinderGeometry(1,1,3,64), material);
+  scene.add(mesh);
+}
+
+function cone(){
+  clearShape();
+  mesh = new THREE.Mesh(new THREE.ConeGeometry(1.5,3,64), material);
+  scene.add(mesh);
+}
+
+function frustum(){
+  clearShape();
+  mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.5, 0.7, 3, 64),
+    material
+  );
+  scene.add(mesh);
+}
+
+cube();
+
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
-
 </body>
 </html>
